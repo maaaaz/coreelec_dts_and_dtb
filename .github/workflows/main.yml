@@ -1,0 +1,91 @@
+name: Compile DTS to DTB
+
+on: 
+  workflow_dispatch
+
+permissions:
+  contents: write
+
+env:
+  APT: sudo apt -y -qq -o=Dpkg::Use-Pty=0
+  LINUX_AMLOGIC_GIT: https://github.com/CoreELEC/linux-amlogic.git
+  COMMON_DRIVERS_GIT: https://github.com/CoreELEC/common_drivers.git
+  LINUX_AMLOGIC_ROOT: /tmp/linux-amlogic
+  COMMON_DRIVERS_ROOT: /tmp/linux-amlogic/common_drivers
+  DTS_UPSTREAM_DIR: /tmp/linux-amlogic/common_drivers/arch/arm64/boot/dts/amlogic/sm1_s905x3_ugoos_x3_pro_4g_1gbit.dts
+  RELEASE_NOTES: /tmp/releasenotes
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install prerequisites
+      run: |
+        $APT update
+        $APT install fd-find autoconf build-essential bc bison flex device-tree-compiler
+    
+    - name: Set up environment
+      run: |
+        cd /tmp/
+        RELEASE_NAME="$(date '+%Y%m%d%H%m%S')"
+        echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
+        
+        git clone -q --depth=1 "$LINUX_AMLOGIC_GIT" "$LINUX_AMLOGIC_ROOT"
+        
+        cd "$LINUX_AMLOGIC_ROOT"        
+        git clone -q --depth=1 "$COMMON_DRIVERS_GIT" "$COMMON_DRIVERS_ROOT"
+        
+        ls -al "$LINUX_AMLOGIC_ROOT"
+        ls -al "$COMMON_DRIVERS_ROOT"
+        
+        du -sh "$LINUX_AMLOGIC_ROOT"
+        du -sh "$COMMON_DRIVERS_ROOT"
+
+    - name: Show versions
+      run: |
+        cd "$LINUX_AMLOGIC_ROOT"
+        echo -e "linux-amlogic:\t$(git branch --show current)" | tee -a "$RELEASE_NOTES"
+        
+        cd "$COMMON_DRIVERS_ROOT"
+        echo -e "common_drivers:\t$(git branch --show current)" | tee -a "$RELEASE_NOTES"
+
+    - name: Make DTBs
+      run: |
+        cd "$LINUX_AMLOGIC_ROOT"
+        make -j$(nproc) ARCH=arm64 defconfig
+        make -j$(nproc) ARCH=arm64 dtbs
+
+    - name: Concatenate full DTS
+      run: |
+        cd /tmp/
+        cpp -nostdinc -undef -x assembler-with-cpp -I "$LINUX_AMLOGIC_ROOT/include" -I "$COMMON_DRIVERS_ROOT/include" "$UGOOS_X3_PRO_DTS" > "$UGOOS_X3_PRO_DTS_FULL"
+
+    - name: Decompile the compiled DTB
+      run: |
+        cd /tmp/
+        dtc -I dtb -O dts -o "$UGOOS_X3_PRO_DTS_DECOMPILED" "$UGOOS_X3_PRO_DTB"
+
+    - name: Check
+      run: |
+        cd /tmp/
+        ls -al "$UGOOS_X3_PRO_DTB"
+        file "$UGOOS_X3_PRO_DTB"
+
+        cd $(dirname "$UGOOS_X3_PRO_DTB")
+        sha256sum --tag $(basename "$UGOOS_X3_PRO_DTB") | tee -a "$RELEASE_NOTES"
+        sha256sum --tag $(basename "$UGOOS_X3_PRO_DTS") | tee -a "$RELEASE_NOTES"
+        sha256sum --tag $(basename "$UGOOS_X3_PRO_DTS_FULL") | tee -a "$RELEASE_NOTES"
+        sha256sum --tag $(basename "$UGOOS_X3_PRO_DTS_DECOMPILED") | tee -a "$RELEASE_NOTES"
+
+    - name: Create a new Github release
+      uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda #v3.0.1
+      with:
+        make_latest: true
+        body_path: ${{ env.RELEASE_NOTES }}
+        name: version ${{ env.RELEASE_NAME }}
+        tag_name: v${{ env.RELEASE_NAME }}
+        files: |
+          ${{ env.UGOOS_X3_PRO_DTB }}
+          ${{ env.UGOOS_X3_PRO_DTS }}
+          ${{ env.UGOOS_X3_PRO_DTS_FULL }}
+          ${{ env.UGOOS_X3_PRO_DTS_DECOMPILED }}
