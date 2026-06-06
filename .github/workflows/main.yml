@@ -53,8 +53,9 @@ jobs:
     - name: Make DTBs
       run: |
         cd "$LINUX_AMLOGIC_ROOT"
-        make -j$(nproc) ARCH=arm64 defconfig
-        make -j$(nproc) ARCH=arm64 dtbs
+        make -j$(nproc) ARCH=arm64 defconfig && make -j$(nproc) ARCH=arm64 dtbs
+        make -j$(nproc) ARCH=arm defconfig && make -j$(nproc) ARCH=arm dtbs
+        make -j$(nproc) ARCH=riscv defconfig && make -j$(nproc) ARCH=riscv dtbs
 
     - name: Concatenate full DTS
       run: |
