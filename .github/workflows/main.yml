@@ -1,9 +1,9 @@
 name: Compile DTS to DTB
 
 on: 
-  workflow_dispatch
-  #schedule:
-  # - cron:  '10 5 * * *'
+  #workflow_dispatch
+  schedule:
+   - cron:  '10 5 * * *'
 
 permissions:
   contents: write
@@ -81,7 +81,7 @@ jobs:
 
         cd $(dirname "$RELEASE_ZIP")
         sha256sum --tag $(basename "$RELEASE_ZIP") | tee -a "$RELEASE_NOTES"
-        ls -alh "$RELEASE_NOTES"
+        ls -alh "$RELEASE_ZIP"
 
     - name: Create a new Github release
       uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda #v3.0.1
