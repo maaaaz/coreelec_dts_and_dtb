@@ -2,6 +2,8 @@ name: Compile DTS to DTB
 
 on: 
   workflow_dispatch
+  #schedule:
+  # - cron:  '10 5 * * *'
 
 permissions:
   contents: write
@@ -14,6 +16,7 @@ env:
   COMMON_DRIVERS_ROOT: /tmp/linux-amlogic/common_drivers
   DTS_ROOT: /tmp/linux-amlogic/common_drivers/arch/
   RELEASE_NOTES: /tmp/releasenotes
+  RELEASE_ZIP: /tmp/coreelec_dts_dtb.zip
   
 jobs:
   build:
@@ -71,16 +74,17 @@ jobs:
         cd /tmp/
         fdfind -e dts -e dtsi -e dtb . "$DTS_ROOT" | sort
 
+    - name: Add to ZIP
+      run: |
+        cd "$COMMON_DRIVERS_ROOT"
+        fdfind -e dts -e dtsi -e dtb . | sort | zip -9 -q -o "$RELEASE_ZIP" -@
 
-    # - name: Create a new Github release
-    #   uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda #v3.0.1
-    #   with:
-    #     make_latest: true
-    #     body_path: ${{ env.RELEASE_NOTES }}
-    #     name: version ${{ env.RELEASE_NAME }}
-    #     tag_name: v${{ env.RELEASE_NAME }}
-    #     files: |
-    #       ${{ env.UGOOS_X3_PRO_DTB }}
-    #       ${{ env.UGOOS_X3_PRO_DTS }}
-    #       ${{ env.UGOOS_X3_PRO_DTS_FULL }}
-    #       ${{ env.UGOOS_X3_PRO_DTS_DECOMPILED }}
+    - name: Create a new Github release
+      uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda #v3.0.1
+      with:
+        make_latest: true
+        body_path: ${{ env.RELEASE_NOTES }}
+        name: version ${{ env.RELEASE_NAME }}
+        tag_name: v${{ env.RELEASE_NAME }}
+        files: |
+          ${{ env.RELEASE_ZIP }}
