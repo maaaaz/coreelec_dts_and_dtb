@@ -64,7 +64,7 @@ jobs:
     - name: Decompile the compiled DTB
       run: |
         cd /tmp/
-        fdfind -e dts . "$DTS_ROOT" -x dtc -I dtb -O dts -o "{.}_decompiled.dts" "{}"
+        fdfind -e dtb . "$DTS_ROOT" -x dtc -q -I dtb -O dts -o "{.}_decompiled.dts" "{}"
     
     - name: List files
       run: |
