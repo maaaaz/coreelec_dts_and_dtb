@@ -79,6 +79,9 @@ jobs:
         cd "$COMMON_DRIVERS_ROOT"
         fdfind -e dts -e dtsi -e dtb . | sort | zip -9 -q -o "$RELEASE_ZIP" -@
 
+        cd $(dirname "$RELEASE_ZIP")
+        sha256sum --tag $(basename "$RELEASE_ZIP") | tee -a "$RELEASE_NOTES"
+
     - name: Create a new Github release
       uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda #v3.0.1
       with:
