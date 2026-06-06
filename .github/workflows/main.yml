@@ -59,12 +59,12 @@ jobs:
         make -j$(nproc) ARCH=arm defconfig && make -j$(nproc) ARCH=arm dtbs
         make -j$(nproc) ARCH=riscv defconfig && make -j$(nproc) ARCH=riscv dtbs
 
-    - name: Concatenate full DTS
+    - name: Concatenate full DTSs
       run: |
         cd /tmp/
         fdfind -e dts . "$DTS_ROOT" -x cpp -nostdinc -undef -x assembler-with-cpp -I "$LINUX_AMLOGIC_ROOT/include" -I "$COMMON_DRIVERS_ROOT/include" -o "{.}_full.dts" "{}" || true
 
-    - name: Decompile the compiled DTB
+    - name: Decompile the compiled DTBs
       run: |
         cd /tmp/
         fdfind -e dtb . "$DTS_ROOT" -x dtc -q -I dtb -O dts -o "{.}_decompiled.dts" "{}"
