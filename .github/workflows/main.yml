@@ -60,7 +60,7 @@ jobs:
     - name: Concatenate full DTS
       run: |
         cd /tmp/
-        fdfind -e dts . "$DTS_ROOT" -x cpp -nostdinc -undef -x assembler-with-cpp -I "$LINUX_AMLOGIC_ROOT/include" -I "$COMMON_DRIVERS_ROOT/include" "{}" > "{.}_full.dts" || true
+        fdfind -e dts . "$DTS_ROOT" -x cpp -nostdinc -undef -x assembler-with-cpp -I "$LINUX_AMLOGIC_ROOT/include" -I "$COMMON_DRIVERS_ROOT/include" -o "{.}_full.dts" "{}" || true
         
         fdfind -e dts . "$DTS_ROOT" -x ls -alh
         fdfind -e dtb . "$DTS_ROOT" -x ls -alh
